@@ -30,8 +30,8 @@ PLAN_PROMPT = """产品信息：
 
 
 class ImagePlanner:
-    def __init__(self, api_key: str):
-        self.client = anthropic.Anthropic(api_key=api_key)
+    def __init__(self, api_key: str, base_url: str = None):
+        self.client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
 
     def _parse_tasks(self, text: str) -> list[ImageTask]:
         try:

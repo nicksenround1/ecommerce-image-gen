@@ -41,8 +41,8 @@ REVIEW_PROMPT = """审核此图片是否满足电商详情页要求。
 
 
 class ImageReviewer:
-    def __init__(self, api_key: str):
-        self.client = anthropic.Anthropic(api_key=api_key)
+    def __init__(self, api_key: str, base_url: str = None):
+        self.client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
 
     def review(self, image_path: str, task: ImageTask) -> ReviewResult:
         with open(image_path, "rb") as f:

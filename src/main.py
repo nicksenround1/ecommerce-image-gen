@@ -30,15 +30,16 @@ def main():
     # 初始化客户端
     anthropic_key = os.environ["ANTHROPIC_API_KEY"]
     gemini_key = os.environ["GEMINI_API_KEY"]
+    base_url = os.environ.get("ANTHROPIC_BASE_URL")
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
 
-    researcher = ProductResearcher(api_key=anthropic_key)
-    planner = ImagePlanner(api_key=anthropic_key)
-    engineer = PromptEngineer(api_key=anthropic_key)
-    reviewer = ImageReviewer(api_key=anthropic_key)
+    researcher = ProductResearcher(api_key=anthropic_key, base_url=base_url)
+    planner = ImagePlanner(api_key=anthropic_key, base_url=base_url)
+    engineer = PromptEngineer(api_key=anthropic_key, base_url=base_url)
+    reviewer = ImageReviewer(api_key=anthropic_key, base_url=base_url)
     generator = NanaBananaGenerator(api_key=gemini_key)
-    client = anthropic.Anthropic(api_key=anthropic_key)
+    client = anthropic.Anthropic(api_key=anthropic_key, base_url=base_url)
     state = WorkflowState(output_dir=output_dir)
 
     # 输入方式

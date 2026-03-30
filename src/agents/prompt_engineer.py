@@ -45,8 +45,8 @@ REFINE_PROMPT = """上一次生图失败。
 
 
 class PromptEngineer:
-    def __init__(self, api_key: str):
-        self.client = anthropic.Anthropic(api_key=api_key)
+    def __init__(self, api_key: str, base_url: str = None):
+        self.client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
 
     def _call_and_parse(self, user_content: str) -> tuple[str, str]:
         response = self.client.messages.create(
