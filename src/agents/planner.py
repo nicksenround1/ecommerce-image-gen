@@ -34,7 +34,10 @@ class ImagePlanner:
         self.client = anthropic.Anthropic(api_key=api_key)
 
     def _parse_tasks(self, text: str) -> list[ImageTask]:
-        data = json.loads(text)
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Planner returned invalid JSON: {e}\nRaw: {text[:500]}") from e
         return [
             ImageTask(
                 index=item["index"],
@@ -87,5 +90,6 @@ class ImagePlanner:
             lines.append(f"  卖点：{task.selling_point}")
             lines.append(f"  构图：{task.composition}")
             lines.append(f"  场景：{task.scene}")
+            lines.append(f"  素材需求：{task.material_request}")
             lines.append("")
         return "\n".join(lines)

@@ -34,7 +34,11 @@ class ProductResearcher:
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": EXTRACT_PROMPT.format(content=content[:8000])}],
         )
-        data = json.loads(response.content[0].text)
+        raw = response.content[0].text
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Claude returned invalid JSON: {e}\nRaw response: {raw[:500]}") from e
         return ProductInfo(
             name=data["name"],
             brand=data["brand"],
@@ -52,7 +56,8 @@ class ProductResearcher:
         with open(image_path, "rb") as f:
             image_data = base64.standard_b64encode(f.read()).decode("utf-8")
         ext = image_path.split(".")[-1].lower()
-        media_type = "image/jpeg" if ext in ("jpg", "jpeg") else "image/png"
+        MEDIA_TYPES = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp", "gif": "image/gif"}
+        media_type = MEDIA_TYPES.get(ext, "image/png")
 
         response = self.client.messages.create(
             model="claude-sonnet-4-6",
@@ -69,7 +74,11 @@ class ProductResearcher:
                 ]
             }],
         )
-        data = json.loads(response.content[0].text)
+        raw = response.content[0].text
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Claude returned invalid JSON: {e}\nRaw response: {raw[:500]}") from e
         return ProductInfo(
             name=data["name"],
             brand=data["brand"],
