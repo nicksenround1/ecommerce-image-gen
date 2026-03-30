@@ -22,6 +22,11 @@ def main():
     print("🛍️  电商详情页生图系统")
     print("=" * 50)
 
+    # 检查必要的环境变量
+    for key in ("ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
+        if not os.environ.get(key):
+            sys.exit(f"Error: {key} is not set. Add it to your .env file.")
+
     # 初始化客户端
     anthropic_key = os.environ["ANTHROPIC_API_KEY"]
     gemini_key = os.environ["GEMINI_API_KEY"]

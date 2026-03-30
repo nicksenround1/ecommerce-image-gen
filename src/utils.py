@@ -22,7 +22,7 @@ def image_to_base64(image_path: str) -> tuple[str, str]:
 def confirm(prompt: str) -> bool:
     while True:
         answer = input(f"\n{prompt} [y/n]: ").strip().lower()
-        if answer in ("y", "yes", ""):
+        if answer in ("y", "yes"):
             return True
         if answer in ("n", "no"):
             return False

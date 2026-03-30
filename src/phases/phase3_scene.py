@@ -50,10 +50,10 @@ def run_phase3_single(
                 task.scene_image_path = result.image_path
                 task.status = PhaseStatus.COMPLETE
                 return task
-            else:
+            elif attempt < MAX_RETRIES:
                 feedback = input("请说明修改方向: ")
                 prompt, negative = engineer.refine_after_failure(product, task, prompt, feedback)
-        else:
+        elif attempt < MAX_RETRIES:
             failure_reason = "; ".join(review.issues)
             prompt, negative = engineer.refine_after_failure(product, task, prompt, failure_reason)
 

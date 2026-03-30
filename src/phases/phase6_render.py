@@ -43,7 +43,7 @@ def run_phase6(
         print(f"  排版图 {task.sub_index}: {task.purpose}...")
         response = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=512,
+            max_tokens=1024,
             messages=[{"role": "user", "content": RENDER_PROMPT.format(
                 sub_index=task.sub_index,
                 purpose=task.purpose,
@@ -58,8 +58,13 @@ def run_phase6(
         except json.JSONDecodeError as e:
             print(f"  ⚠️ JSON parse error for task {task.sub_index}: {e}")
             continue
+        prompt = data.get("prompt")
+        neg = data.get("negative_prompt")
+        if not prompt or not neg:
+            print(f"  ⚠️ Missing prompt/negative_prompt keys for task {task.sub_index}, skipping")
+            continue
         output_path = os.path.join(output_dir, f"final_{task.sub_index}.png")
-        result = generator.generate(data["prompt"], data["negative_prompt"], output_path)
+        result = generator.generate(prompt, neg, output_path)
         if result.success:
             task.layout_image_path = result.image_path
             print(f"  ✅ {output_path}")
