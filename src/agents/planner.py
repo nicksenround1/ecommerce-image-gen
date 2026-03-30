@@ -1,6 +1,14 @@
 import json
+import re
 import anthropic
 from src.models import ProductInfo, ImageTask
+
+
+def _extract_json(raw: str) -> str:
+    match = re.search(r"```(?:json)?\s*(\[.*\]|\{.*\})\s*```", raw, re.DOTALL)
+    if match:
+        return match.group(1)
+    return raw
 
 SYSTEM_PROMPT = """你是一名专业的 Amazon 详情页视觉策划师。
 基于产品信息，规划一套 5-8 张图片的详情页方案。
@@ -35,7 +43,7 @@ class ImagePlanner:
 
     def _parse_tasks(self, text: str) -> list[ImageTask]:
         try:
-            data = json.loads(text)
+            data = json.loads(_extract_json(text))
         except json.JSONDecodeError as e:
             raise ValueError(f"Planner returned invalid JSON: {e}\nRaw: {text[:500]}") from e
         return [

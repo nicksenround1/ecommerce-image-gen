@@ -1,6 +1,14 @@
 import json
+import re
 import anthropic
 from src.models import ProductInfo
+
+
+def _extract_json(raw: str) -> str:
+    match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", raw, re.DOTALL)
+    if match:
+        return match.group(1)
+    return raw
 
 SYSTEM_PROMPT = """你是一名专业的电商产品分析师，专注于 Amazon 详情页优化。
 从提供的产品信息中，提取关键数据并以 JSON 格式输出。
@@ -36,7 +44,7 @@ class ProductResearcher:
         )
         raw = response.content[0].text
         try:
-            data = json.loads(raw)
+            data = json.loads(_extract_json(raw))
         except json.JSONDecodeError as e:
             raise ValueError(f"Claude returned invalid JSON: {e}\nRaw response: {raw[:500]}") from e
         return ProductInfo(
@@ -76,7 +84,7 @@ class ProductResearcher:
         )
         raw = response.content[0].text
         try:
-            data = json.loads(raw)
+            data = json.loads(_extract_json(raw))
         except json.JSONDecodeError as e:
             raise ValueError(f"Claude returned invalid JSON: {e}\nRaw response: {raw[:500]}") from e
         return ProductInfo(

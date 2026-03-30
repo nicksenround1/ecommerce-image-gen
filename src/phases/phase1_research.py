@@ -8,8 +8,8 @@ def fetch_url_content(url: str) -> str:
     try:
         from firecrawl import FirecrawlApp
         app = FirecrawlApp(api_key=os.environ["FIRECRAWL_API_KEY"])
-        result = app.scrape_url(url, params={"formats": ["markdown"]})
-        return result.get("markdown", "")
+        result = app.scrape(url, formats=["markdown"])
+        return result.markdown or ""
     except Exception as e:
         raise RuntimeError(f"URL 抓取失败: {e}")
 
