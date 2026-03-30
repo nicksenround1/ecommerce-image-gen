@@ -45,7 +45,7 @@ class ImageTask:
 @dataclass
 class GenerationResult:
     success: bool
-    image_path: Optional[str]
+    image_path: Optional[str] = None
     error: Optional[str] = None
     prompt_used: str = ""
     negative_prompt_used: str = ""

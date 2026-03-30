@@ -1,4 +1,4 @@
-from src.models import ProductInfo, ImageTask, WorkflowState, PhaseStatus
+from src.models import ProductInfo, ImageTask, WorkflowState, PhaseStatus, GenerationResult, ReviewResult
 
 
 def test_workflow_state_initialization():
@@ -16,3 +16,22 @@ def test_image_task_default_status():
     )
     assert task.status == PhaseStatus.PENDING
     assert task.scene_image_path is None
+
+
+def test_generation_result_success():
+    result = GenerationResult(success=True, image_path="output/test.png")
+    assert result.image_path == "output/test.png"
+    assert result.error is None
+
+
+def test_generation_result_failure():
+    result = GenerationResult(success=False, error="API error")
+    assert result.image_path is None
+    assert result.success is False
+
+
+def test_review_result_defaults():
+    result = ReviewResult(passed=True)
+    assert result.issues == []
+    assert result.suggestions == []
+    assert result.score == 0
