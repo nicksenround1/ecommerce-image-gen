@@ -1,7 +1,15 @@
 import json
+import re
 import base64
 import anthropic
 from src.models import ImageTask, ReviewResult
+
+
+def _extract_json(raw: str) -> str:
+    match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", raw, re.DOTALL)
+    if match:
+        return match.group(1)
+    return raw
 
 SYSTEM_PROMPT = """你是 Amazon 电商详情页图片质量审核专家。
 严格按照质量标准审核图片，输出 JSON 格式审核结果。"""
@@ -65,7 +73,7 @@ class ImageReviewer:
         )
         raw = response.content[0].text
         try:
-            data = json.loads(raw)
+            data = json.loads(_extract_json(raw))
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON from reviewer: {e}\nRaw: {raw[:500]}") from e
         return ReviewResult(

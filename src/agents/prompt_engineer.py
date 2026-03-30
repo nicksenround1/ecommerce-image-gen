@@ -1,6 +1,14 @@
 import json
+import re
 import anthropic
 from src.models import ImageTask, ProductInfo
+
+
+def _extract_json(raw: str) -> str:
+    match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", raw, re.DOTALL)
+    if match:
+        return match.group(1)
+    return raw
 
 SYSTEM_PROMPT = """你是 Gemini Nano Banana 2 图片生成提示词专家，专注于 Amazon 电商详情页图片生成。
 
@@ -25,7 +33,7 @@ ENGINEER_PROMPT = """产品：{product_name}（{brand}）
   "negative_prompt": "英文负向提示词（避免的元素）"
 }}
 
-负向提示词必须包含：blurry, distorted, deformed, watermark, text overlay, multiple products"""
+负向提示词必须包含：blurry, distorted, deformed, watermark, text overlay, multiple products, product floating"""
 
 REFINE_PROMPT = """上一次生图失败。
 原提示词：{original_prompt}
@@ -49,10 +57,14 @@ class PromptEngineer:
         )
         raw = response.content[0].text
         try:
-            data = json.loads(raw)
+            data = json.loads(_extract_json(raw))
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON from prompt engineer: {e}\nRaw: {raw[:500]}") from e
-        return data["prompt"], data["negative_prompt"]
+        prompt = data.get("prompt")
+        negative_prompt = data.get("negative_prompt")
+        if prompt is None or negative_prompt is None:
+            raise ValueError(f"Missing required keys in prompt engineer response. Raw: {raw[:500]}")
+        return prompt, negative_prompt
 
     def generate(
         self,
