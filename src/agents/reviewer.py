@@ -1,7 +1,8 @@
 import json
 import re
-import base64
-import anthropic
+from pathlib import Path
+from google import genai
+from google.genai import types
 from src.models import ImageTask, ReviewResult
 
 
@@ -31,7 +32,7 @@ REVIEW_PROMPT = """审核此图片是否满足电商详情页要求。
 6. 无明显电商禁忌（无多余配件、无错误材质）
 7. 商业摄影级别质量
 
-输出 JSON：
+输出 JSON（严格 JSON，无多余文字）：
 {{
   "passed": true或false,
   "issues": ["问题1"],
@@ -42,36 +43,30 @@ REVIEW_PROMPT = """审核此图片是否满足电商详情页要求。
 
 class ImageReviewer:
     def __init__(self, api_key: str, base_url: str = None):
-        self.client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
+        self.client = genai.Client(api_key=api_key)
 
     def review(self, image_path: str, task: ImageTask) -> ReviewResult:
-        with open(image_path, "rb") as f:
-            image_data = base64.standard_b64encode(f.read()).decode("utf-8")
+        image_bytes = Path(image_path).read_bytes()
         ext = image_path.split(".")[-1].lower()
         MEDIA_TYPES = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp", "gif": "image/gif"}
-        media_type = MEDIA_TYPES.get(ext, "image/png")
+        mime = MEDIA_TYPES.get(ext, "image/png")
 
-        response = self.client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {"type": "base64", "media_type": media_type, "data": image_data}
-                    },
-                    {"type": "text", "text": REVIEW_PROMPT.format(
-                        purpose=task.purpose,
-                        selling_point=task.selling_point,
-                        composition=task.composition,
-                        scene=task.scene,
-                    )}
-                ]
-            }],
+        response = self.client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                types.Part.from_bytes(data=image_bytes, mime_type=mime),
+                REVIEW_PROMPT.format(
+                    purpose=task.purpose,
+                    selling_point=task.selling_point,
+                    composition=task.composition,
+                    scene=task.scene,
+                ),
+            ],
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+            ),
         )
-        raw = response.content[0].text
+        raw = response.text
         try:
             data = json.loads(_extract_json(raw))
         except json.JSONDecodeError as e:

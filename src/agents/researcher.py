@@ -1,6 +1,7 @@
 import json
 import re
 import anthropic
+from pathlib import Path
 from src.models import ProductInfo
 
 
@@ -59,30 +60,29 @@ class ProductResearcher:
             raw_content=content,
         )
 
-    def extract_from_image(self, image_path: str) -> ProductInfo:
-        import base64
-        with open(image_path, "rb") as f:
-            image_data = base64.standard_b64encode(f.read()).decode("utf-8")
+    def extract_from_image(self, image_path: str, gemini_api_key: str = None) -> ProductInfo:
+        from google import genai
+        from google.genai import types
+        import os
+
+        api_key = gemini_api_key or os.environ.get("GEMINI_API_KEY", "")
+        gemini = genai.Client(api_key=api_key)
+        image_bytes = Path(image_path).read_bytes()
         ext = image_path.split(".")[-1].lower()
         MEDIA_TYPES = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp", "gif": "image/gif"}
-        media_type = MEDIA_TYPES.get(ext, "image/png")
+        mime = MEDIA_TYPES.get(ext, "image/png")
 
-        response = self.client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=2048,
-            system=SYSTEM_PROMPT,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {"type": "base64", "media_type": media_type, "data": image_data}
-                    },
-                    {"type": "text", "text": EXTRACT_PROMPT.format(content="[图片中的产品，请从图片视觉信息提取]")}
-                ]
-            }],
+        response = gemini.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                types.Part.from_bytes(data=image_bytes, mime_type=mime),
+                EXTRACT_PROMPT.format(content="[图片中的产品，请从图片视觉信息提取]"),
+            ],
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+            ),
         )
-        raw = response.content[0].text
+        raw = response.text
         try:
             data = json.loads(_extract_json(raw))
         except json.JSONDecodeError as e:

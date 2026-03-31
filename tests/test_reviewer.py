@@ -16,9 +16,9 @@ def _mock_task():
     )
 
 
-def _mock_response(text: str):
+def _mock_gemini_response(text: str):
     mock = MagicMock()
-    mock.content = [MagicMock(type="text", text=text)]
+    mock.text = text
     return mock
 
 
@@ -27,7 +27,7 @@ def test_reviewer_returns_review_result(tmp_path):
     img_path = str(tmp_path / "test.png")
     with open(img_path, "wb") as f:
         f.write(PNG_1X1)
-    with patch.object(reviewer.client.messages, 'create', return_value=_mock_response('{"passed":true,"issues":[],"suggestions":["光线可以更强"],"score":8}')):
+    with patch.object(reviewer.client.models, 'generate_content', return_value=_mock_gemini_response('{"passed":true,"issues":[],"suggestions":["光线可以更强"],"score":8}')):
         result = reviewer.review(img_path, _mock_task())
     assert isinstance(result, ReviewResult)
     assert result.passed is True
@@ -39,7 +39,7 @@ def test_reviewer_fails_on_low_quality(tmp_path):
     img_path = str(tmp_path / "test.png")
     with open(img_path, "wb") as f:
         f.write(PNG_1X1)
-    with patch.object(reviewer.client.messages, 'create', return_value=_mock_response('{"passed":false,"issues":["产品变形","背景喧宾夺主"],"suggestions":["重新生成"],"score":3}')):
+    with patch.object(reviewer.client.models, 'generate_content', return_value=_mock_gemini_response('{"passed":false,"issues":["产品变形","背景喧宾夺主"],"suggestions":["重新生成"],"score":3}')):
         result = reviewer.review(img_path, _mock_task())
     assert result.passed is False
     assert len(result.issues) == 2
@@ -50,7 +50,7 @@ def test_reviewer_raises_on_invalid_json(tmp_path):
     img_path = str(tmp_path / "test.png")
     with open(img_path, "wb") as f:
         f.write(PNG_1X1)
-    with patch.object(reviewer.client.messages, 'create', return_value=_mock_response("not json")):
+    with patch.object(reviewer.client.models, 'generate_content', return_value=_mock_gemini_response("not json")):
         try:
             reviewer.review(img_path, _mock_task())
             assert False, "Should have raised"

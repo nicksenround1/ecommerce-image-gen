@@ -37,7 +37,7 @@ def main():
     researcher = ProductResearcher(api_key=anthropic_key, base_url=base_url)
     planner = ImagePlanner(api_key=anthropic_key, base_url=base_url)
     engineer = PromptEngineer(api_key=anthropic_key, base_url=base_url)
-    reviewer = ImageReviewer(api_key=anthropic_key, base_url=base_url)
+    reviewer = ImageReviewer(api_key=gemini_key)
     generator = NanaBananaGenerator(api_key=gemini_key)
     client = anthropic.Anthropic(api_key=anthropic_key, base_url=base_url)
     state = WorkflowState(output_dir=output_dir)

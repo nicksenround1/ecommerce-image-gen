@@ -42,8 +42,13 @@ def test_researcher_extracts_from_image(tmp_path):
     with open(img_path, "wb") as f:
         f.write(PNG_1X1)
     researcher = ProductResearcher(api_key="test-key")
-    with patch.object(researcher.client.messages, 'create', return_value=_mock_response(MOCK_JSON)):
-        result = researcher.extract_from_image(img_path)
+    mock_gemini_resp = MagicMock()
+    mock_gemini_resp.text = MOCK_JSON
+    with patch("google.genai.Client") as MockClient:
+        mock_instance = MagicMock()
+        mock_instance.models.generate_content.return_value = mock_gemini_resp
+        MockClient.return_value = mock_instance
+        result = researcher.extract_from_image(img_path, gemini_api_key="test-key")
     assert isinstance(result, ProductInfo)
     assert result.name == "Test Light"
     assert "[image:" in result.raw_content
